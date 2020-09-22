@@ -1,14 +1,14 @@
 const express = require('express');
 const app = express();
-const port = 5000;
-app.use(express.json);          //middleware for jason
-app.use(express.urlencoded);    //middleware for form
+const port = 3000;
+app.use(express.json());          //middleware for jason
+app.use(express.urlencoded());    //middleware for form
+
+
+// app.use('/login', require('./practice1.js'));
 
 //app.get('/avida', (req, res) => res.send("Avshek Dahal"))
 
-// const function1 = (req,res)=> {
-//     res.send("Avishek Dahal");
-// }
 //app.get('/avida',function1);
 app.get('/', (req, res) => res.sendFile(__dirname + "/hamro.html"));
 app.get('/submit', (req, res) => {
@@ -23,9 +23,9 @@ app.get('/submit', (req, res) => {
     }
 });
 app.post("/submit",(req,res)=>{
-    
-    const username = req.query['username'];
-    const password = req.query['password'];
+
+    const username = req.body['username'];
+    const password = req.body['password'];
 
     if (username === 'aaa') {
         res.send('welcome');
@@ -34,6 +34,4 @@ app.post("/submit",(req,res)=>{
     }
 
 });
-
-
 app.listen(port, () => console.log(`server started at port ${port}`));
