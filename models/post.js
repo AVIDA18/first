@@ -6,26 +6,29 @@ const postSchema = mongoose.Schema({
         unique: false,
         required: true
     },
-    caption:{
-     type: String,
-     required: true
+    caption: {
+        type: String,
+        required: true
     },
-    likes:[{
+    likes: [{
         type: String,
         required: true,
         unique: true
     }],
-    comments:[{
-        by:{
+    comments: [{
+        by: {
             type: String,
             required: true
         },
-        caption:{
+        caption: {
             type: String,
-            required:true
+            required: true
         }
     }]
 });
 
+postSchema.pre('save', (next) => {
+    next();
+})
 module.exports = mongoose.model('posts', postSchema);
 

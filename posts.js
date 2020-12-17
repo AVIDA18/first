@@ -3,18 +3,16 @@ const router = express.Router();
 
 const posts = require("./models/post");
 
-router.get('/', (req, res) => {
+router.get('/', (req, res, next) => {
     posts.find({
 
     }).then(d => {
-        res.json(d.map(x=>{
-            var w= x.toObject()
-            w.isLiked=w.likes.includes(req.user.username)
+        res.json(d.map(x => {
+            var w = x.toObject()
+            w.isLiked = w.likes.includes(req.user.username)
             return w;
         }))
-    }).catch(e => {
-        res.status(406).json(e)
-    })
+    }).catch(e => next(e))
 
 
 
@@ -30,9 +28,11 @@ router.get('/', (req, res) => {
 })
 
 
-router.post('/add', (req, res) => {
+router.post('/add', (req, res, next) => {
+
+
     const { caption } = req.body
-    if (!caption) {
+    if (caption) {
         res.status(406).send("add caption");
     } else {
         posts.create({
@@ -41,10 +41,7 @@ router.post('/add', (req, res) => {
 
         }).then(d => {
             res.json({ caption, username: req.user.username, id: d._id });
-        }).catch(e => {
-            console.log(e)
-            res.status(406).json(e)
-        })
+        }).catch(e => next(e))
         // const postId = "l" + Math.round(Math.random() * 9999)
         // posts.push({ caption, username: req.user.username, postId });
         // res.json({ caption, postId });
@@ -74,25 +71,24 @@ router.post('/add', (req, res) => {
 //     }
 // })
 
-var likes = []
 
 router.get("/like/:postId", (req, res) => {
     const { postId } = req.params;
-    if (!postId) res.status(406).json({error:"no post id entered"})
+    if (!postId) res.status(406).json({ error: "no post id entered" })
     posts.findOne({
-        _id : postId
-    }).then(d=>{
-        if(d){
+        _id: postId
+    }).then(d => {
+        if (d) {
             let isLiked = d.likes.includes(req.user.username)
-            if(isLiked){
+            if (isLiked) {
                 d.likes.pull(req.user.username)
-            }else{
+            } else {
                 d.likes.push(req.user.username)
             }
-            d.save().then(d=>res.json({isLiked:!isLiked}))
-            .catch(e=>res.status(406).json(e))
-        }else{
-            res.status(406).json({error:"post not found"})
+            d.save().then(d => res.json({ isLiked: !isLiked }))
+                .catch(e => res.status(406).json(e))
+        } else {
+            res.status(406).json({ error: "post not found" })
         }
     })
 
@@ -112,22 +108,59 @@ router.get("/like/:postId", (req, res) => {
     //     }
 
 
-   // }
+    // }
 
 
 })
 
-let comments = [];
 
+
+router.post("/add/comments/:postId", async (req, res) => {
+
+    try {
+        const { postId } = req.params;
+        const { caption } = req.body;
+
+        const post = await posts.findOne({ _id: postId }).exec();
+        if (post) {
+            post.comments.push({ caption, by: req.user.username });
+            await post.save();
+            res.json({ status: 'comment added.' })
+        }
+        else {
+            res.status(406).json({ error: 'Post not found.' })
+        }
+    }
+    catch (e) {
+        res.status(406).json({ error: e })
+    }
+
+})
 router.post('/add/comments/:postId', (req, res) => {
     const { postId } = req.params;
     const { comment } = req.body;
-    if (posts.filter(x => x.postId === postId).length < 1) {
-        res.status(406).json({ error: "post not found" });
-    } else {
-        comments.push({ comment, postId, username: req.user.username })
-        res.json({ comment, postId, username: req.user.username })
-    }
+
+    posts.findOne({ _id: postId })
+        .then(d => {
+            if (d) {
+                d.comment.push({ comment, username: req.user.username });
+                d.save()
+                    .then(w => {
+                        res.json({ status: 'comment added.' })
+                    }).catch(e => res.status(406).json(e))
+
+            }
+            else {
+                res.status(406).json({ error: 'Post not found.' })
+            }
+        }).catch(e => res.status(406).json(e))
+
+    // if (posts.filter(x => x.postId === postId).length < 1) {
+    //     res.status(406).json({ error: "post not found" });
+    // } else {
+    //     comments.push({ comment, postId, username: req.user.username })
+    //     res.json({ comment, postId, username: req.user.username })
+    // }
 
 })
 

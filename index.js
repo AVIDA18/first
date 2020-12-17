@@ -62,7 +62,7 @@ const checkAuthorization = (req, res, next) => {
     loggedUser.findOne({
         token: authorization
     }).then(d => {
-        console.log(d)
+        // console.log(d)
         if (d) {
             req.user = d;
             next();
@@ -90,5 +90,21 @@ app.get('/users', checkAuthorization, (req, res) => {
 })
 
 app.use('/posts', checkAuthorization, require('./posts.js'));
+
+app.use(function (err, req, res, next) {
+    if (err) {
+        
+        res.status(406).json({ error: 'something went wrong.' })
+        // if (err.name == "MongoError" || err.name == "ValidationError") {
+        //     res.status(406).json({ error: String(err) })
+        // }
+        // else {
+
+
+        // }
+    }
+
+})
+
 
 app.listen(port, () => console.log(`server started at port ${port}`));
